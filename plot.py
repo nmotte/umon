@@ -48,22 +48,21 @@ def main():
         print("# Stopping dstat on {0}").format(server['hostname'])
         COMMAND=('\'ps aux | grep dstat | grep plot.dat | awk "{print \$2}" | xargs kill\'')
         subprocess_cmd("root", server['hostname'], COMMAND)
+        COMMAND=('\'ps aux | grep iostat | grep iostat.dat | awk "{print \$2}" | xargs kill\'')
+        subprocess_cmd("root", server['hostname'], COMMAND)
 
     # Gather stats
     for server in conf['servers']:
         print "# Retrieving and merging stats from {0}".format(server['hostname'])
         call('scp -o "StrictHostKeyChecking no" root@{0}:./plot.dat ./{0}.dstat.dat > /dev/null 2>&1'.format(server['hostname']), shell=True)
+        tmp = open("tmpfile", "w")
+        call(['sed', '1,7d', '{0}.dstat.dat'.format(server['hostname'])], stdout=tmp)
+        call(['mv', 'tmpfile', '{0}.dstat.dat'.format(server['hostname'])])
         call('scp -o "StrictHostKeyChecking no" root@{0}:./iostat.dat ./{0}.iostat.dat > /dev/null 2>&1'.format(server['hostname']), shell=True)
         call('paste -d "," ./{0}.dstat.dat ./{0}.iostat.dat > ./{0}.dat; rm -f ./{0}.dstat.dat ./{0}.iostat.dat'.format(server['hostname']), shell=True)
-        COMMAND=("rm -f plot.dat")
+        COMMAND=("rm -f plot.dat iostat.dat")
         subprocess_cmd("root", server['hostname'], COMMAND)
 
-    # Format data files
-    for server in conf['servers']:
-        tmp = open("tmpfile", "w")
-        call(['sed', '1,7d', '{0}.dat'.format(server['hostname'])], stdout=tmp)
-        call(['mv', 'tmpfile', '{0}.dat'.format(server['hostname'])])
-    
     call(['rm', '-f', 'plot.gnu'])
     # Create GNU Plot file
     print "# Generating gnuplot configuration file"
