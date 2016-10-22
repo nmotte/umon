@@ -21,7 +21,7 @@ def main():
     (options, args) = parser.parse_args()
 
     uid = uuid.uuid4()
-    print uid
+    print "Monitoring UID: {0}".format(str(uid))
 
     if not options.time:
         print 'Time is missing'
@@ -38,10 +38,10 @@ def main():
     # Start dstat
     for server in conf['servers']:
         print("# Starting dstat on {0}").format(server['hostname'])
-        COMMAND=('\'nohup dstat --noheaders -t -n -N eth1 -d -D ' + ','.join(server['device']) + ' -c -m -y --output plot.dat 5 > /dev/null 2>&1&'
-        'echo $! > dstat.' + str(uid) + '.pid;'
-        'nohup iostat -d -x -m -p ' + ','.join(server['device']) + ' 5 | awk "/' + '\ |'.join(server['device']) + '\ / {print \$10; fflush(stdout)}" | awk "NR%2{printf \\"%s,\\",\$0;fflush(stdout);next;}1" > iostat.dat&'
-        'echo $! > iostat.' + str(uid) + '.pid;\'')
+        COMMAND=('\'nohup dstat --noheaders -t -n -N eth1 -d -D {1} -c -m -y --output dstat.dat 5 > /dev/null 2>&1&'
+        'echo $! > dstat.{0}.pid;'
+        'nohup iostat -d -x -m -p {1} 5 | awk "/{2}\ / {{print \$10; fflush(stdout)}}" | awk "NR%2{{printf \\"%s,\\",\$0;fflush(stdout);next;}}1" > iostat.dat&'
+        'echo $! > iostat.{0}.pid;\'').format(str(uid), ','.join(server['device']), '\ |'.join(server['device']))
         subprocess_cmd("root", server['hostname'], COMMAND)
     
     # Wait for test
@@ -51,23 +51,21 @@ def main():
     # Stop dstat
     for server in conf['servers']:
         print("# Stopping dstat on {0}").format(server['hostname'])
-        COMMAND=('\'ps aux | grep dstat | grep plot.dat | awk "{print \$2}" | xargs kill;\'')
+        COMMAND=('\'kill `cat dstat.{0}.pid`;kill `cat iostat.{0}.pid`;\'').format(str(uid))
         subprocess_cmd("root", server['hostname'], COMMAND)
-        COMMAND=('\'ps aux | grep iostat | awk "{print \$2}" | xargs kill;\'')
-        subprocess_cmd("root", server['hostname'], COMMAND)
-        COMMAND=('\'rm -f iostat*.pid dstat*.pid;\'')
+        COMMAND=('\'rm -f iostat.{0}.pid dstat.{0}.pid;\'').format(str(uid))
         subprocess_cmd("root", server['hostname'], COMMAND)
 
     # Gather stats
     for server in conf['servers']:
         print "# Retrieving and merging stats from {0}".format(server['hostname'])
-        call('scp -o "StrictHostKeyChecking no" root@{0}:./plot.dat ./{0}.dstat.dat > /dev/null 2>&1'.format(server['hostname']), shell=True)
+        call('scp -o "StrictHostKeyChecking no" root@{0}:./dstat.dat ./{0}.dstat.dat > /dev/null 2>&1'.format(server['hostname']), shell=True)
         tmp = open("tmpfile", "w")
         call(['sed', '1,7d', '{0}.dstat.dat'.format(server['hostname'])], stdout=tmp)
         call(['mv', 'tmpfile', '{0}.dstat.dat'.format(server['hostname'])])
         call('scp -o "StrictHostKeyChecking no" root@{0}:./iostat.dat ./{0}.iostat.dat > /dev/null 2>&1'.format(server['hostname']), shell=True)
         call('paste -d "," ./{0}.dstat.dat ./{0}.iostat.dat > ./{0}.dat; rm -f ./{0}.dstat.dat ./{0}.iostat.dat'.format(server['hostname']), shell=True)
-        COMMAND=("rm -f plot.dat iostat.dat")
+        COMMAND=("rm -f dstat.dat iostat.dat")
         subprocess_cmd("root", server['hostname'], COMMAND)
 
     call(['rm', '-f', 'plot.gnu'])
