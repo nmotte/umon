@@ -1,5 +1,5 @@
 from optparse import OptionParser
-import json
+import json, uuid
 import subprocess, sys, time
 from subprocess import call
 
@@ -20,6 +20,9 @@ def main():
     parser.add_option("-c", "--conf", dest="conf")
     (options, args) = parser.parse_args()
 
+    uid = uuid.uuid4()
+    print uid
+
     if not options.time:
         print 'Time is missing'
         parser.print_help()
@@ -35,8 +38,10 @@ def main():
     # Start dstat
     for server in conf['servers']:
         print("# Starting dstat on {0}").format(server['hostname'])
-        COMMAND=('\'nohup dstat --noheaders -t -n -N eth1 -d -D ' + ','.join(server['device']) + ' -c -m -y --output plot.dat 5 > /dev/null 2>&1&\''
-        '\'iostat -d -x -m -p ' + ','.join(server['device']) + ' 5 | awk "/' + '\ |'.join(server['device']) + '\ / {print \$10; fflush(stdout)}" | awk "NR%2{printf \\"%s,\\",\$0;fflush(stdout);next;;}1" > iostat.dat&\'')
+        COMMAND=('\'nohup dstat --noheaders -t -n -N eth1 -d -D ' + ','.join(server['device']) + ' -c -m -y --output plot.dat 5 > /dev/null 2>&1&'
+        'echo $! > dstat.' + str(uid) + '.pid;'
+        'nohup iostat -d -x -m -p ' + ','.join(server['device']) + ' 5 | awk "/' + '\ |'.join(server['device']) + '\ / {print \$10; fflush(stdout)}" | awk "NR%2{printf \\"%s,\\",\$0;fflush(stdout);next;}1" > iostat.dat&'
+        'echo $! > iostat.' + str(uid) + '.pid;\'')
         subprocess_cmd("root", server['hostname'], COMMAND)
     
     # Wait for test
@@ -46,9 +51,11 @@ def main():
     # Stop dstat
     for server in conf['servers']:
         print("# Stopping dstat on {0}").format(server['hostname'])
-        COMMAND=('\'ps aux | grep dstat | grep plot.dat | awk "{print \$2}" | xargs kill\'')
+        COMMAND=('\'ps aux | grep dstat | grep plot.dat | awk "{print \$2}" | xargs kill;\'')
         subprocess_cmd("root", server['hostname'], COMMAND)
-        COMMAND=('\'ps aux | grep iostat | grep iostat.dat | awk "{print \$2}" | xargs kill\'')
+        COMMAND=('\'ps aux | grep iostat | awk "{print \$2}" | xargs kill;\'')
+        subprocess_cmd("root", server['hostname'], COMMAND)
+        COMMAND=('\'rm -f iostat*.pid dstat*.pid;\'')
         subprocess_cmd("root", server['hostname'], COMMAND)
 
     # Gather stats
