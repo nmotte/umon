@@ -6,7 +6,7 @@
 * ssh keys to connect to all the servers without password
 
 ```bash
-python plot.py -t 10 -c sample.conf
+python umon.py -t 10 -s 1 -c sample_conf
 ```
 
 Output:

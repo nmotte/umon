@@ -1,56 +1,69 @@
 {
-    'servers': [
+    "servers": [
         {
-            'hostname': 'ns6737901.ip-164-132-166.eu', 
-            'device' : ['sdc', 'sdd']
+            "hostname": "ns6737901.ip-164-132-166.eu", 
+            "device" : ["sdc", "sdd", "nvme0n1"],
+            "interface":["eth1"]
         },
         {
-            'hostname': 'ns6737902.ip-164-132-166.eu', 
-            'device' : ['sdc', 'sdd']
+            "hostname": "ns6737902.ip-164-132-166.eu", 
+            "device" : ["sdc", "sdd", "nvme0n1"],
+            "interface":["eth1"]
         },
         {
-            'hostname': 'ns6737903.ip-164-132-166.eu', 
-            'device' : ['sdc', 'sdd']
+            "hostname": "ns6737903.ip-164-132-166.eu", 
+            "device" : ["sdc", "sdd", "nvme0n1"],
+            "interface":["eth1"]
         },
         {
-            'hostname': 'ns6737904.ip-164-132-166.eu', 
-            'device' : ['sdc', 'sdd']
+            "hostname": "ns6737904.ip-164-132-166.eu", 
+            "device" : ["sdc", "sdd", "nvme0n1"],
+            "interface":["eth1"]
         },
         {
-            'hostname': 'ns6737905.ip-164-132-166.eu', 
-            'device' : ['sdc', 'sdd']
+            "hostname": "ns6737905.ip-164-132-166.eu", 
+            "device" : ["sdc", "sdd", "nvme0n1"],
+            "interface":["eth1"]
         },
         {
-            'hostname': 'ns6737906.ip-164-132-166.eu', 
-            'device' : ['sdc', 'sdd']
+            "hostname": "ns6737906.ip-164-132-166.eu", 
+            "device" : ["sdc", "sdd", "nvme0n1"],
+            "interface":["eth1"]
         },
         {
-            'hostname': 'ns6737908.ip-164-132-166.eu', 
-            'device' : ['sdc', 'sdd']
+            "hostname": "ns6737908.ip-164-132-166.eu", 
+            "device" : ["sdc", "sdd", "nvme0n1"],
+            "interface":["eth1"]
         },
         {
-            'hostname': 'ns6737909.ip-164-132-166.eu'
-            'device' : ['sdc', 'sdd']
+            "hostname": "ns6737909.ip-164-132-166.eu",
+            "device" : ["sdc", "sdd", "nvme0n1"],
+            "interface":["eth1"]
         },
         {
-            'hostname': 'ns6736510.ip-164-132-166.eu'
-            'device' : ['sda', 'sdb']
+            "hostname": "ns6736510.ip-164-132-166.eu",
+            "device" : ["sda", "sdb"],
+            "interface":["eth1"]
         },
         {
-            'hostname': 'ns6736511.ip-164-132-166.eu'
-            'device' : ['sda', 'sdb']
+            "hostname": "ns6736511.ip-164-132-166.eu",
+            "device" : ["sda", "sdb"],
+            "interface":["eth1"]
         },
         {
-            'hostname': 'ns6736512.ip-164-132-166.eu'
-            'device' : ['sda', 'sdb']
+            "hostname": "ns6736512.ip-164-132-166.eu",
+            "device" : ["sda", "sdb"],
+            "interface":["eth1"]
         },
         {
-            'hostname': 'ns6736513.ip-164-132-166.eu'
-            'device' : ['sda', 'sdb']
+            "hostname": "ns6736513.ip-164-132-166.eu",
+            "device" : ["sda", "sdb"],
+            "interface":["eth1"]
         },
         {
-            'hostname': 'ns6736514.ip-164-132-166.eu'
-            'device' : ['sda', 'sdb']
+            "hostname": "ns6736514.ip-164-132-166.eu",
+            "device" : ["sda", "sdb"],
+            "interface":["eth1"]
         }
     ]
 }
