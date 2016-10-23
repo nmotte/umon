@@ -73,7 +73,7 @@ def main():
     call(['rm', '-f', 'umon.gnu'])
     # Create GNU Plot file
     print "# Generating gnuplot configuration file"
-    GNU_FILE=('set terminal png size 6144,3200 enhanced font "Helvetica,20"\n'
+    GNU_FILE=('set terminal png size 7680,4800 enhanced font "Helvetica,20"\n'
      'set output "output.png"\n'
      'set datafile separator ","\n'
      'set key outside left\n'
@@ -107,10 +107,10 @@ def main():
         field = 4 
         devices = []
         for device in server['device']:
-            devices.append(('"{0}.dat" u {1} w lp ls {2} t "Read {3}"').format(server['hostname'], field, line_style, device))
+            devices.append(('"{0}.dat" u {1} w lp ls {2} t "R {3}"').format(server['hostname'], field, line_style, device))
             line_style+=1
             field+=1
-            devices.append(('"{0}.dat" u {1} w lp ls {2} t "Write {3}"').format(server['hostname'], field, line_style, device))
+            devices.append(('"{0}.dat" u {1} w lp ls {2} t "W {3}"').format(server['hostname'], field, line_style, device))
             line_style+=1
             field+=1
         GNU_FILE+=','.join(devices)+'\n'
