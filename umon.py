@@ -44,7 +44,7 @@ def main():
         print("# Starting dstat and iostat on {0}").format(server['hostname'])
         COMMAND=('\'nohup dstat --noheaders -t -n -N {3} -d -D {1} -c -m -y --output dstat.dat {4} > /dev/null 2>&1&'
         'echo $! > dstat.{0}.pid;'
-        'nohup iostat -d -x -m -p {1} {4} | awk "/{2}\ / {{print \$12; fflush(stdout)}}" | awk "NR%{5}!=0 {{printf \$0;printf \\",\\";fflush(stdout)}} NR%{5}==0 {{printf \$0;print \\"\\";fflush(stdout)}}" > iostat.dat&'
+        'nohup iostat -d -x -m -p {1} {4} | awk "/{2}\ / {{printf \\"%s,%s\\n\\",\$11,\$12; fflush(stdout)}}" | awk "NR%{5}!=0 {{printf \$0;printf \\",\\";fflush(stdout)}} NR%{5}==0 {{printf \$0;print \\"\\";fflush(stdout)}}" > iostat.dat&'
         'echo $! > iostat.{0}.pid;\'').format(uid, ','.join(server['device']), '\ |'.join(server['device']), ','.join(server['interface']), options.sampling, len(server['device']))
         subprocess_cmd("root", server['hostname'], COMMAND)
     
@@ -73,10 +73,11 @@ def main():
     call(['rm', '-f', 'umon.gnu'])
     # Create GNU Plot file
     print "# Generating gnuplot configuration file"
-    GNU_FILE=('set terminal png size 7680,4800 enhanced font "Helvetica,20"\n'
+    GNU_FILE=('set terminal png size 11520,10080 enhanced font "Helvetica,20"\n'
      'set output "output.png"\n'
      'set datafile separator ","\n'
      'set key outside left\n'
+     'set key spacing 0.5\n'
      'set style line 80 lt 0 lc rgb "#808080"\n'
      'set border 3 back ls 80 \n'
      'set style line 81 lt 0 lc rgb "#808080" lw 0.5\n'
@@ -144,6 +145,9 @@ def main():
         field += 12
         devices = []
         for device in server['device']:
+            devices.append(('"{0}.dat" u {1} w lp ls {2} t "r await {3}"').format(server['hostname'], field, line_style, device))
+            line_style+=1
+            field+=1
             devices.append(('"{0}.dat" u {1} w lp ls {2} t "w await {3}"').format(server['hostname'], field, line_style, device))
             line_style+=1
             field+=1
