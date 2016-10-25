@@ -42,9 +42,9 @@ def main():
     # Start dstat
     for server in conf['servers']:
         print("# Starting dstat and iostat on {0}").format(server['hostname'])
-        COMMAND=('\'nohup dstat --noheaders -t -n -N {3} -d -D {1} -c -m -y --output dstat.dat {4} > /dev/null 2>&1&'
+        COMMAND=('\'nohup dstat --noheaders -t -n -N {3} -d -D {1} -c -m -y --output dstat.{0}.dat {4} > /dev/null 2>&1&'
         'echo $! > dstat.{0}.pid;'
-        'nohup iostat -d -x -m -p {1} {4} | awk "/{2}\ / {{printf \\"%s,%s\\n\\",\$11,\$12; fflush(stdout)}}" | awk "NR%{5}!=0 {{printf \$0;printf \\",\\";fflush(stdout)}} NR%{5}==0 {{printf \$0;print \\"\\";fflush(stdout)}}" > iostat.dat&'
+        'nohup iostat -d -x -m -p {1} {4} | awk "/{2}\ / {{printf \\"%s,%s\\n\\",\$11,\$12; fflush(stdout)}}" | awk "NR%{5}!=0 {{printf \$0;printf \\",\\";fflush(stdout)}} NR%{5}==0 {{printf \$0;print \\"\\";fflush(stdout)}}" > iostat.{0}.dat&'
         'echo $! > iostat.{0}.pid;\'').format(uid, ','.join(server['devices']), '\ |'.join(server['devices']), ','.join(server['interfaces']), options.sampling, len(server['devices']))
         subprocess_cmd("root", server['hostname'], COMMAND)
     
@@ -61,13 +61,13 @@ def main():
     # Gather stats
     for server in conf['servers']:
         print "# Retrieving and merging stats from {0}".format(server['hostname'])
-        call('scp -o "StrictHostKeyChecking no" -o ConnectTimeout=2 root@{0}:./dstat.dat ./{0}.dstat.dat > /dev/null 2>&1'.format(server['hostname']), shell=True)
+        call('scp -o "StrictHostKeyChecking no" -o ConnectTimeout=2 root@{0}:./dstat.{1}.dat ./{0}.dstat.dat > /dev/null 2>&1'.format(server['hostname'], uid), shell=True)
         with open("tmpfile", "w") as tmp:
             call(['sed', '1,7d', '{0}.dstat.dat'.format(server['hostname'])], stdout=tmp)
         call(['mv', 'tmpfile', '{0}.dstat.dat'.format(server['hostname'])])
-        call('scp -o "StrictHostKeyChecking no" -o ConnectTimeout=2 root@{0}:./iostat.dat ./{0}.iostat.dat > /dev/null 2>&1'.format(server['hostname']), shell=True)
+        call('scp -o "StrictHostKeyChecking no" -o ConnectTimeout=2 root@{0}:./iostat.{1}.dat ./{0}.iostat.dat > /dev/null 2>&1'.format(server['hostname'], uid), shell=True)
         call('paste -d "," ./{0}.dstat.dat ./{0}.iostat.dat > ./{0}.dat; rm -f ./{0}.dstat.dat ./{0}.iostat.dat'.format(server['hostname']), shell=True)
-        COMMAND=("rm -f dstat.dat iostat.dat")
+        COMMAND=("rm -f dstat.{0}.dat iostat.{0}.dat").format(uid)
         subprocess_cmd("root", server['hostname'], COMMAND)
 
     call(['rm', '-f', 'umon.gnu'])
