@@ -16,9 +16,9 @@ def main():
 
     usage = "usage: %prog [options] arg"
     parser = OptionParser(usage)
-    parser.add_option("-t", "--time", type="int", dest="time")
-    parser.add_option("-c", "--conf", dest="conf")
-    parser.add_option("-s", "--sampling", type='int', dest="sampling", default=5)
+    parser.add_option("-t", "--time", help="Monitoring time", type="int", dest="time")
+    parser.add_option("-c", "--conf", help="Path to a configuration file", dest="conf")
+    parser.add_option("-s", "--sampling", help="Sampling time (time between two dots)", type='int', dest="sampling", default=5)
     (options, args) = parser.parse_args()
 
     uid = str(uuid.uuid4())
@@ -45,7 +45,7 @@ def main():
         COMMAND=('\'nohup dstat --noheaders -t -n -N {3} -d -D {1} -c -m -y --output dstat.dat {4} > /dev/null 2>&1&'
         'echo $! > dstat.{0}.pid;'
         'nohup iostat -d -x -m -p {1} {4} | awk "/{2}\ / {{printf \\"%s,%s\\n\\",\$11,\$12; fflush(stdout)}}" | awk "NR%{5}!=0 {{printf \$0;printf \\",\\";fflush(stdout)}} NR%{5}==0 {{printf \$0;print \\"\\";fflush(stdout)}}" > iostat.dat&'
-        'echo $! > iostat.{0}.pid;\'').format(uid, ','.join(server['device']), '\ |'.join(server['device']), ','.join(server['interface']), options.sampling, len(server['device']))
+        'echo $! > iostat.{0}.pid;\'').format(uid, ','.join(server['devices']), '\ |'.join(server['devices']), ','.join(server['interfaces']), options.sampling, len(server['devices']))
         subprocess_cmd("root", server['hostname'], COMMAND)
     
     # Wait for test
@@ -97,17 +97,27 @@ def main():
             # Network
             'set label 1 "Network {0}" at graph 0.2,1.1 font ",8"\n'
             'set format y "%.0s%cB"\n'
-            'plot "{0}.dat" u 2 w lp ls 1 t "Recv", "{0}.dat" u 3 w lp ls 2 t "Send"\n'
-            # IO
-            'set label 1 "IO {0}" at graph 0.2,1.1 font ",8"\n'
-            'set format y "%.0s%cB"\n'
+            'plot '
         ).format(server['hostname'])
 
-        GNU_FILE+='plot '
         line_style = 1
-        field = 4 
+        field = 2
+        interfaces = []
+        for interface in server['interfaces']:
+            interfaces.append(('"{0}.dat" u {1} w lp ls {2} t "Recv {5}", "{0}.dat" u {3} w lp ls {4} t "Send {5}"').format(server['hostname'], field, line_style, field+1, line_style+1, interface))
+            line_style+=2
+            field+=2
+        GNU_FILE+=','.join(interfaces)+'\n'
+
+        GNU_FILE+=(# IO
+            'set label 1 "IO {0}" at graph 0.2,1.1 font ",8"\n'
+            'set format y "%.0s%cB"\n'
+            'plot '
+        ).format(server['hostname'])
+
+        line_style = 1
         devices = []
-        for device in server['device']:
+        for device in server['devices']:
             devices.append(('"{0}.dat" u {1} w lp ls {2} t "R {3}"').format(server['hostname'], field, line_style, device))
             line_style+=1
             field+=1
@@ -138,13 +148,13 @@ def main():
             # w_await
             'set label 1 "w await {0}" at graph 0.2,1.1 font ",8"\n'
             'unset format\n'
+            'plot '
         ).format(server['hostname'], field, field+1, field+2, field+3, field+6, field+7, field+8, field+9, field+11)
-
-        GNU_FILE+='plot '
-        line_style = 1
         field += 12
+
+        line_style = 1
         devices = []
-        for device in server['device']:
+        for device in server['devices']:
             devices.append(('"{0}.dat" u {1} w lp ls {2} t "r await {3}"').format(server['hostname'], field, line_style, device))
             line_style+=1
             field+=1
