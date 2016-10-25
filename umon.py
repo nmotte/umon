@@ -24,7 +24,7 @@ def main():
     uid = str(uuid.uuid4())
     print "Monitoring UID: {0}".format(uid)
 
-    with open(".uid", "w") as tmp:
+    with open(".{0}.uid".format(uid), "w") as tmp:
         tmp.write(uid)
 
     if not options.time:
@@ -171,7 +171,7 @@ def main():
     print "# Dumping graphs in output.png"
     call(['gnuplot', '-p', 'umon.gnu'])
 
-    os.remove('.uid')
+    os.remove(".{0}.uid".format(uid))
 
 if __name__ == "__main__":
     main()
