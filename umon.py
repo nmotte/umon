@@ -4,7 +4,7 @@ import subprocess, sys, time
 from subprocess import call
 
 def subprocess_cmd(user, host, command):
-    ssh = subprocess.Popen("ssh -o StrictHostKeyChecking=no -o ConnectTimeout=2 {0}@{1} ".format(user, host) + command, shell=True, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
+    ssh = subprocess.Popen("ssh -o StrictHostKeyChecking=no -o ConnectTimeout=10 {0}@{1} ".format(user, host) + command, shell=True, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
     result = ssh.stdout.readlines()
     if result == []:
         error = ssh.stderr.readlines()
@@ -61,11 +61,11 @@ def main():
     # Gather stats
     for server in conf['servers']:
         print "# Retrieving and merging stats from {0}".format(server['hostname'])
-        call('scp -o "StrictHostKeyChecking no" -o ConnectTimeout=2 root@{0}:./dstat.{1}.dat ./{0}.dstat.dat > /dev/null 2>&1'.format(server['hostname'], uid), shell=True)
+        call('scp -o "StrictHostKeyChecking no" -o ConnectTimeout=10 root@{0}:./dstat.{1}.dat ./{0}.dstat.dat > /dev/null 2>&1'.format(server['hostname'], uid), shell=True)
         with open("tmpfile", "w") as tmp:
             call(['sed', '1,7d', '{0}.dstat.dat'.format(server['hostname'])], stdout=tmp)
         call(['mv', 'tmpfile', '{0}.dstat.dat'.format(server['hostname'])])
-        call('scp -o "StrictHostKeyChecking no" -o ConnectTimeout=2 root@{0}:./iostat.{1}.dat ./{0}.iostat.dat > /dev/null 2>&1'.format(server['hostname'], uid), shell=True)
+        call('scp -o "StrictHostKeyChecking no" -o ConnectTimeout=10 root@{0}:./iostat.{1}.dat ./{0}.iostat.dat > /dev/null 2>&1'.format(server['hostname'], uid), shell=True)
         call('paste -d "," ./{0}.dstat.dat ./{0}.iostat.dat > ./{0}.dat; rm -f ./{0}.dstat.dat ./{0}.iostat.dat'.format(server['hostname']), shell=True)
         COMMAND=("rm -f dstat.{0}.dat iostat.{0}.dat").format(uid)
         subprocess_cmd("root", server['hostname'], COMMAND)
