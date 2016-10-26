@@ -1,38 +1,56 @@
 from optparse import OptionParser
-import json, uuid, os
+import json, uuid, os, logging
 import subprocess, sys, time
 from subprocess import call
 
-def subprocess_cmd(user, host, command):
-    ssh = subprocess.Popen("ssh -o StrictHostKeyChecking=no -o ConnectTimeout=10 {0}@{1} ".format(user, host) + command, shell=True, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
-    result = ssh.stdout.readlines()
-    if result == []:
+def subprocess_cmd(user, host, command, timeout):
+    flag=True
+    while (flag):
+        ssh = subprocess.Popen('ssh -o "StrictHostKeyChecking no" -o ConnectTimeout={2} {0}@{1} '.format(user, host, timeout) + command, shell=True, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
         error = ssh.stderr.readlines()
-        #print >>sys.stderr, "ERROR: %s" % error
-    else:
-        print result
+        logging.debug(error)
+        if (len(error) > 0):
+            if (error[0].find('Connection timed out') == -1 and error[0].find('Could not resolve') == -1):
+                flag=False
+            else:
+                tmp = raw_input("> {0} is unreachable, retry? [Y/N]: ".format(host))
+                if (tmp == 'N'):
+                    flag=False
+                    return 1
+        else:
+            flag=False
+    return 0
 
 def main():
 
     usage = "usage: %prog [options] arg"
     parser = OptionParser(usage)
-    parser.add_option("-t", "--time", help="Monitoring time", type="int", dest="time")
+    parser.add_option("-r", "--runtime", help="Monitoring time (in seconds)", type="int", dest="time")
     parser.add_option("-c", "--conf", help="Path to a configuration file", dest="conf")
     parser.add_option("-s", "--sampling", help="Sampling time (time between two dots)", type='int', dest="sampling", default=5)
+    parser.add_option("-t", "--timeout", help="Connection timeout", type='int', dest="timeout", default=10)
+    parser.add_option("-d", "--debug", action="store_true", dest="debug", default=False, help="Enable debug logs")
     (options, args) = parser.parse_args()
 
     uid = str(uuid.uuid4())
-    print "Monitoring UID: {0}".format(uid)
 
-    with open(".{0}.uid".format(uid), "w") as tmp:
+    # Logging configuration
+    level = logging.INFO
+    if (options.debug):
+        level = logging.DEBUG
+    logging.basicConfig(stream=sys.stdout, level=level, format='%(levelname)s\t# %(message)s')
+
+    logging.info('Monitoring UID: {0}'.format(uid))
+
+    with open(".uid.{0}".format(uid), "w") as tmp:
         tmp.write(uid)
 
     if not options.time:
-        print 'Time is missing'
+        logging.info('Monitoring time is missing')
         parser.print_help()
         return
     if not options.conf:
-        print 'Conf file is missing'
+        logging.info('Conf file is missing')
         parser.print_help()
         return
 
@@ -41,38 +59,39 @@ def main():
 
     # Start dstat
     for server in conf['servers']:
-        print("# Starting dstat and iostat on {0}").format(server['hostname'])
+        logging.info(("Starting dstat and iostat on {0}").format(server['hostname']))
         COMMAND=('\'nohup dstat --noheaders -t -n -N {3} -d -D {1} -c -m -y --output dstat.{0}.dat {4} > /dev/null 2>&1&'
         'echo $! > dstat.{0}.pid;'
         'nohup iostat -d -x -m -p {1} {4} | awk "/{2}\ / {{printf \\"%s,%s\\n\\",\$11,\$12; fflush(stdout)}}" | awk "NR%{5}!=0 {{printf \$0;printf \\",\\";fflush(stdout)}} NR%{5}==0 {{printf \$0;print \\"\\";fflush(stdout)}}" > iostat.{0}.dat&'
         'echo $! > iostat.{0}.pid;\'').format(uid, ','.join(server['devices']), '\ |'.join(server['devices']), ','.join(server['interfaces']), options.sampling, len(server['devices']))
-        subprocess_cmd("root", server['hostname'], COMMAND)
+        subprocess_cmd("root", server['hostname'], COMMAND, options.timeout)
+            
     
     # Wait for test
-    print("# Monitoring for {0} seconds...").format(options.time)
+    logging.info(("Monitoring for {0} seconds...").format(options.time))
     time.sleep(options.time)
     
     # Stop dstat
     for server in conf['servers']:
-        print("# Stopping dstat and iostat on {0}").format(server['hostname'])
+        logging.info(("Stopping dstat and iostat on {0}").format(server['hostname']))
         COMMAND=('\'kill `cat dstat.{0}.pid`;kill `cat iostat.{0}.pid`;rm -f iostat.{0}.pid dstat.{0}.pid;\'').format(uid)
-        subprocess_cmd("root", server['hostname'], COMMAND)
+        subprocess_cmd("root", server['hostname'], COMMAND, options.timeout)
 
     # Gather stats
     for server in conf['servers']:
-        print "# Retrieving and merging stats from {0}".format(server['hostname'])
-        call('scp -o "StrictHostKeyChecking no" -o ConnectTimeout=10 root@{0}:./dstat.{1}.dat ./{0}.dstat.dat > /dev/null 2>&1'.format(server['hostname'], uid), shell=True)
+        logging.info("Retrieving and merging stats from {0}".format(server['hostname']))
+        call('scp -o "StrictHostKeyChecking no" -o ConnectTimeout={2} root@{0}:./dstat.{1}.dat ./{0}.dstat.dat > /dev/null 2>&1'.format(server['hostname'], uid, options.timeout), shell=True)
         with open("tmpfile", "w") as tmp:
             call(['sed', '1,7d', '{0}.dstat.dat'.format(server['hostname'])], stdout=tmp)
         call(['mv', 'tmpfile', '{0}.dstat.dat'.format(server['hostname'])])
-        call('scp -o "StrictHostKeyChecking no" -o ConnectTimeout=10 root@{0}:./iostat.{1}.dat ./{0}.iostat.dat > /dev/null 2>&1'.format(server['hostname'], uid), shell=True)
+        call('scp -o "StrictHostKeyChecking no" -o ConnectTimeout={2} root@{0}:./iostat.{1}.dat ./{0}.iostat.dat > /dev/null 2>&1'.format(server['hostname'], uid, options.timeout), shell=True)
         call('paste -d "," ./{0}.dstat.dat ./{0}.iostat.dat > ./{0}.dat; rm -f ./{0}.dstat.dat ./{0}.iostat.dat'.format(server['hostname']), shell=True)
         COMMAND=("rm -f dstat.{0}.dat iostat.{0}.dat").format(uid)
-        subprocess_cmd("root", server['hostname'], COMMAND)
+        subprocess_cmd("root", server['hostname'], COMMAND, options.timeout)
 
     call(['rm', '-f', 'umon.gnu'])
     # Create GNU Plot file
-    print "# Generating gnuplot configuration file"
+    logging.info("Generating gnuplot configuration file")
     GNU_FILE=('set terminal png size 11520,10080 enhanced font "Helvetica,20"\n'
      'set output "output.png"\n'
      'set datafile separator ","\n'
@@ -168,10 +187,10 @@ def main():
     with open("umon.gnu", "w") as gnufile:
         gnufile.write(GNU_FILE)
     
-    print "# Dumping graphs in output.png"
+    logging.info("Dumping graphs in output.png")
     call(['gnuplot', '-p', 'umon.gnu'])
 
-    os.remove(".{0}.uid".format(uid))
+    os.remove(".uid.{0}".format(uid))
 
 if __name__ == "__main__":
     main()
