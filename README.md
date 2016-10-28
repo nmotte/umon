@@ -34,17 +34,17 @@
 }
 ```
 
-* hostname
+* __hostname__
 
     Type: String  
     Hostname of a server to monitor
 
-* devices
+* __devices__
 
     Type: Array of strings  
     List of devices to monitor, e.g "sda", "sdb", "nvme0n1"
 
-* interfaces
+* __interfaces__
 
     Type: Array of strings  
     List of interfaces to monitor, e.g. "eth0", "eth1"
