@@ -35,14 +35,14 @@
 ```
 
 ### hostname
-Type: String\s\s
-Hostname of a server to monitor
+    Type: String  
+    Hostname of a server to monitor
 ### devices
-Type: Array of strings\s\s
-List of devices to monitor, e.g "sda", "sdb", "nvme0n1"
+    Type: Array of strings  
+    List of devices to monitor, e.g "sda", "sdb", "nvme0n1"
 ### interfaces
-Type: Array of strings\s\s
-List of interfaces to monitor, e.g. "eth0", "eth1"
+    Type: Array of strings  
+    List of interfaces to monitor, e.g. "eth0", "eth1"
 
 ## Run 
 ```bash
