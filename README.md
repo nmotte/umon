@@ -1,5 +1,8 @@
 # umon
 
+## Output
+![alt text](https://github.com/nmotte/umon/blob/master/screenshot/example.png)
+
 ## Pre-requisites
 * Install gnuplot on the server running umon
 ```bash
@@ -51,8 +54,6 @@
 
 ## Run 
 ```bash
-> python umon.py -r 5 -s 1 -t 10 -c sample_conf
-
 > python umon.py --help
 Usage: umon.py [options] arg
 
@@ -68,7 +69,22 @@ Options:
   -t TIMEOUT, --timeout=TIMEOUT
                         SSH connection timeout (in seconds), default=60
   -d, --debug           Enable debug logs
-```
 
-## Output
-![alt text](https://github.com/nmotte/umon/blob/master/screenshot/example.png)
+> python umon.py -r 5 -s 1 -t 10 -c umon.json
+INFO    # Monitoring UID: 3637a7b6-2cb0-4762-a099-07d2535d8ad3
+INFO    # Starting dstat and iostat on ns6737901.ip-164-132-166.eu
+INFO    # Monitoring for 5 seconds...
+INFO    # Stopping dstat and iostat on ns6737901.ip-164-132-166.eu
+INFO    # Retrieving and merging stats from ns6737901.ip-164-132-166.eu
+INFO    # Generating gnuplot configuration file
+INFO    # Dumping graphs in output.png
+
+> python umon.py -s 1 -t 10 -c umon.json
+INFO    # Monitoring UID: 4ab75362-8594-41dc-b78b-5081968b3e4a
+INFO    # Starting dstat and iostat on ns6737901.ip-164-132-166.eu
+> Monitoring... Enter 'stop' to stop: stop
+INFO    # Stopping dstat and iostat on ns6737901.ip-164-132-166.eu
+INFO    # Retrieving and merging stats from ns6737901.ip-164-132-166.eu
+INFO    # Generating gnuplot configuration file
+INFO    # Dumping graphs in output.png
+```
