@@ -59,12 +59,14 @@ Usage: umon.py [options] arg
 Options:
   -h, --help            show this help message and exit
   -r TIME, --runtime=TIME
-                        Monitoring time (in seconds)
+                        Monitoring time (in seconds), default=-1 (stops on
+                        user input)
   -c CONF, --conf=CONF  Path to a configuration file
   -s SAMPLING, --sampling=SAMPLING
-                        Sampling time (time between two dots, in seconds)
+                        Sampling time (time between two dots, in seconds),
+                        default=5
   -t TIMEOUT, --timeout=TIMEOUT
-                        SSH connection timeout (in seconds)
+                        SSH connection timeout (in seconds), default=60
   -d, --debug           Enable debug logs
 ```
 

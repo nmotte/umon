@@ -25,10 +25,10 @@ def main():
 
     usage = "usage: %prog [options] arg"
     parser = OptionParser(usage)
-    parser.add_option("-r", "--runtime", help="Monitoring time (in seconds)", type="int", dest="time")
-    parser.add_option("-c", "--conf", help="Path to a configuration file", dest="conf")
-    parser.add_option("-s", "--sampling", help="Sampling time (time between two dots, in seconds)", type='int', dest="sampling", default=5)
-    parser.add_option("-t", "--timeout", help="SSH connection timeout (in seconds)", type='int', dest="timeout", default=10)
+    parser.add_option("-r", "--runtime",  help="Monitoring time (in seconds), default=-1 (stops on user input)", dest="time", type="int", default=-1)
+    parser.add_option("-c", "--conf",     help="Path to a configuration file", dest="conf")
+    parser.add_option("-s", "--sampling", help="Sampling time (time between two dots, in seconds), default=5", dest="sampling", type="int", default=5)
+    parser.add_option("-t", "--timeout",  help="SSH connection timeout (in seconds), default=60", dest="timeout", type="int", default=60)
     parser.add_option("-d", "--debug", action="store_true", dest="debug", default=False, help="Enable debug logs")
     (options, args) = parser.parse_args()
 
@@ -68,8 +68,13 @@ def main():
             
     
     # Wait for test
-    logging.info(("Monitoring for {0} seconds...").format(options.time))
-    time.sleep(options.time)
+    if ( options.time > 0):
+        logging.info(("Monitoring for {0} seconds...").format(options.time))
+        time.sleep(options.time)
+    else:
+        tmp = ''
+        while (tmp != 'stop'):
+            tmp = raw_input("> Monitoring... Enter 'stop' to stop: ")
     
     # Stop dstat
     for server in conf['servers']:
