@@ -32,18 +32,11 @@ def main():
     parser.add_option("-d", "--debug", action="store_true", dest="debug", default=False, help="Enable debug logs")
     (options, args) = parser.parse_args()
 
-    uid = str(uuid.uuid4())
-
     # Logging configuration
     level = logging.INFO
     if (options.debug):
         level = logging.DEBUG
     logging.basicConfig(stream=sys.stdout, level=level, format='%(levelname)s\t# %(message)s')
-
-    logging.info('Monitoring UID: {0}'.format(uid))
-
-    with open(".uid.{0}".format(uid), "w") as tmp:
-        tmp.write(uid)
 
     if not options.time:
         logging.info('Monitoring time is missing')
@@ -54,8 +47,15 @@ def main():
         parser.print_help()
         return
 
+    uid = str(uuid.uuid4())
+
     with open(options.conf) as conf_file:    
         conf = json.load(conf_file)
+
+    logging.info('Monitoring UID: {0}'.format(uid))
+
+    with open(".uid.{0}".format(uid), "w") as tmp:
+        tmp.write(uid)
 
     # Start dstat
     for server in conf['servers']:
@@ -72,9 +72,10 @@ def main():
         logging.info(("Monitoring for {0} seconds...").format(options.time))
         time.sleep(options.time)
     else:
+        logging.info("Monitoring... Enter 'stop' to stop:")
         tmp = ''
         while (tmp != 'stop'):
-            tmp = raw_input("> Monitoring... Enter 'stop' to stop: ")
+            tmp = raw_input("> ")
     
     # Stop dstat
     for server in conf['servers']:
@@ -195,6 +196,7 @@ def main():
     logging.info("Dumping graphs in output.png")
     call(['gnuplot', '-p', 'umon.gnu'])
 
+    os.remove('umon.gnu')
     os.remove(".uid.{0}".format(uid))
 
 if __name__ == "__main__":
