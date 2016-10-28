@@ -82,7 +82,8 @@ INFO    # Dumping graphs in output.png
 > python umon.py -s 1 -t 10 -c umon.json
 INFO    # Monitoring UID: 4ab75362-8594-41dc-b78b-5081968b3e4a
 INFO    # Starting dstat and iostat on ns6737901.ip-164-132-166.eu
-> Monitoring... Enter 'stop' to stop: stop
+INFO    # Monitoring... Enter 'stop' to stop:
+> stop
 INFO    # Stopping dstat and iostat on ns6737901.ip-164-132-166.eu
 INFO    # Retrieving and merging stats from ns6737901.ip-164-132-166.eu
 INFO    # Generating gnuplot configuration file
