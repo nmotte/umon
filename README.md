@@ -1,5 +1,9 @@
 # umon
 
+umon is a system monitoring module.  
+It provides a lightweight way to monitor system metrics and display them in one single png file.
+It is based on dstat, iostat and gnuplot.
+
 ## Output
 ![alt text](https://github.com/nmotte/umon/blob/master/screenshot/example.png)
 
@@ -11,6 +15,15 @@
 
 # Fedora/CentOS/RedHat
 > sudo yum install gnuplot
+```
+
+* Install iostat on the servers to monitor
+```bash
+# Ubuntu
+> sudo apt-get install sysstat
+
+# Fedora/CentOS/RedHat
+> yum install sysstat
 ```
 
 * Install dstat on the servers to monitor
