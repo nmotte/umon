@@ -1,8 +1,8 @@
 # umon
 
-    umon is a system monitoring module.
-    It provides a lightweight way to monitor system metrics and display them in one single png file.
-    It is based on dstat, iostat and gnuplot.
+    umon is a system monitoring module.  
+    It provides a lightweight way to monitor system metrics and display them in one single png file.  
+    It is based on dstat, iostat and gnuplot.  
 
 ## Output
 ![alt text](https://github.com/nmotte/umon/blob/master/screenshot/example.png)
