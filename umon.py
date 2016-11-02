@@ -98,7 +98,9 @@ def main():
     call(['rm', '-f', 'umon.gnu'])
     # Create GNU Plot file
     logging.info("Generating gnuplot configuration file")
-    GNU_FILE=('set terminal png size 11520,10080 enhanced font "Helvetica,20"\n'
+    WIDTH=900*len(conf['servers'])
+    HEIGHT=800*len(conf['servers'])
+    GNU_FILE=('set terminal png size {0},{1} enhanced font "Helvetica,20"\n'
      'set output "output.png"\n'
      'set datafile separator ","\n'
      'set key outside left\n'
@@ -114,7 +116,7 @@ def main():
      'set style line 5 lt 1 lc rgb "#D0D000" lw 2 pt 13 ps 1\n'
      'set style line 6 lt 1 lc rgb "#00D0D0" lw 2 pt 12 ps 1\n'
      'set style line 7 lt 1 lc rgb "#B200B2" lw 2 pt 5 ps 1\n'
-     'set multiplot layout 13,6 rowsfirst\n')
+     'set multiplot layout 13,6 rowsfirst\n').format(WIDTH, HEIGHT)
     
     
     for server in conf['servers']:
