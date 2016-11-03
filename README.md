@@ -1,8 +1,9 @@
 # umon
 
-umon is a system monitoring module.  
+umon is a system monitoring script.  
 It provides a lightweight way to monitor system metrics and display them in one single png file.  
-It is based on dstat, iostat and gnuplot.  
+
+It is meant for proofs of concept and troubleshooting.
 
 ## Output
 ![alt text](https://github.com/nmotte/umon/blob/master/screenshot/example.png)
@@ -72,6 +73,7 @@ Usage: umon.py [options] arg
 
 Options:
   -h, --help            show this help message and exit
+  -u USER, --user=USER  User used for SSH and scp, default=root
   -r TIME, --runtime=TIME
                         Monitoring time (in seconds), default=-1 (stops on
                         user input)
@@ -84,18 +86,18 @@ Options:
   -d, --debug           Enable debug logs
 
 > python umon.py -r 5 -s 1 -t 10 -c umon.json
-INFO    # Monitoring UID: 3637a7b6-2cb0-4762-a099-07d2535d8ad3
+INFO    # Umon UID: 3637a7b6-2cb0-4762-a099-07d2535d8ad3
 INFO    # Starting dstat and iostat on ns6737901.ip-164-132-166.eu
-INFO    # Monitoring for 5 seconds...
+INFO    # Umon started at 13:08:38 GMT, it will stop in 5 seconds...
 INFO    # Stopping dstat and iostat on ns6737901.ip-164-132-166.eu
 INFO    # Retrieving and merging stats from ns6737901.ip-164-132-166.eu
 INFO    # Generating gnuplot configuration file
 INFO    # Dumping graphs in output.png
 
 > python umon.py -s 1 -t 10 -c umon.json
-INFO    # Monitoring UID: 4ab75362-8594-41dc-b78b-5081968b3e4a
+INFO    # Umon UID: 4ab75362-8594-41dc-b78b-5081968b3e4a
 INFO    # Starting dstat and iostat on ns6737901.ip-164-132-166.eu
-INFO    # Monitoring... Enter 'stop' to stop:
+INFO    # Umon started at 13:08:38 GMT... Enter 'stop' to stop:
 > stop
 INFO    # Stopping dstat and iostat on ns6737901.ip-164-132-166.eu
 INFO    # Retrieving and merging stats from ns6737901.ip-164-132-166.eu

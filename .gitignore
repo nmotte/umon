@@ -1,5 +1,5 @@
 *.dat
 *.gnu
 *.json
-*.uid
+*.uid*
 output.png

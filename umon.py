@@ -1,4 +1,5 @@
 from optparse import OptionParser
+from time import gmtime, strftime
 import json, uuid, os, logging
 import subprocess, sys, time
 from subprocess import call
@@ -25,6 +26,7 @@ def main():
 
     usage = "usage: %prog [options] arg"
     parser = OptionParser(usage)
+    parser.add_option("-u", "--user",  help="User used for SSH and scp, default=root", dest="user", default="root")
     parser.add_option("-r", "--runtime",  help="Monitoring time (in seconds), default=-1 (stops on user input)", dest="time", type="int", default=-1)
     parser.add_option("-c", "--conf",     help="Path to a configuration file", dest="conf")
     parser.add_option("-s", "--sampling", help="Sampling time (time between two dots, in seconds), default=5", dest="sampling", type="int", default=5)
@@ -52,7 +54,7 @@ def main():
     with open(options.conf) as conf_file:    
         conf = json.load(conf_file)
 
-    logging.info('Monitoring UID: {0}'.format(uid))
+    logging.info('Umon UID: {0}'.format(uid))
 
     with open(".uid.{0}".format(uid), "w") as tmp:
         tmp.write(uid)
@@ -64,15 +66,15 @@ def main():
         'echo $! > dstat.{0}.pid;'
         'nohup iostat -d -x -m -p {1} {4} | awk "/{2}\ / {{printf \\"%s,%s\\n\\",\$11,\$12; fflush(stdout)}}" | awk "NR%{5}!=0 {{printf \$0;printf \\",\\";fflush(stdout)}} NR%{5}==0 {{printf \$0;print \\"\\";fflush(stdout)}}" > iostat.{0}.dat&'
         'echo $! > iostat.{0}.pid;\'').format(uid, ','.join(server['devices']), '\ |'.join(server['devices']), ','.join(server['interfaces']), options.sampling, len(server['devices']))
-        subprocess_cmd("root", server['hostname'], COMMAND, options.timeout)
+        subprocess_cmd(options.user, server['hostname'], COMMAND, options.timeout)
             
     
     # Wait for test
     if ( options.time > 0):
-        logging.info(("Monitoring for {0} seconds...").format(options.time))
+        logging.info(("Umon started at {0} GMT, it will stop in {1} seconds...").format(strftime("%H:%M:%S", gmtime()), options.time))
         time.sleep(options.time)
     else:
-        logging.info("Monitoring... Enter 'stop' to stop:")
+        logging.info(("Umon started at {0} GMT... Enter 'stop' to stop:").format(strftime("%H:%M:%S", gmtime())))
         tmp = ''
         while (tmp != 'stop'):
             tmp = raw_input("> ")
@@ -81,19 +83,19 @@ def main():
     for server in conf['servers']:
         logging.info(("Stopping dstat and iostat on {0}").format(server['hostname']))
         COMMAND=('\'kill `cat dstat.{0}.pid`;kill `cat iostat.{0}.pid`;rm -f iostat.{0}.pid dstat.{0}.pid;\'').format(uid)
-        subprocess_cmd("root", server['hostname'], COMMAND, options.timeout)
+        subprocess_cmd(options.user, server['hostname'], COMMAND, options.timeout)
 
     # Gather stats
     for server in conf['servers']:
         logging.info("Retrieving and merging stats from {0}".format(server['hostname']))
-        call('scp -o "StrictHostKeyChecking no" -o ConnectTimeout={2} root@{0}:./dstat.{1}.dat ./{0}.dstat.dat > /dev/null 2>&1'.format(server['hostname'], uid, options.timeout), shell=True)
+        call('scp -o "StrictHostKeyChecking no" -o ConnectTimeout={2} {3}@{0}:./dstat.{1}.dat ./{0}.dstat.dat > /dev/null 2>&1'.format(server['hostname'], uid, options.timeout, options.user), shell=True)
         with open("tmpfile", "w") as tmp:
             call(['sed', '1,7d', '{0}.dstat.dat'.format(server['hostname'])], stdout=tmp)
         call(['mv', 'tmpfile', '{0}.dstat.dat'.format(server['hostname'])])
-        call('scp -o "StrictHostKeyChecking no" -o ConnectTimeout={2} root@{0}:./iostat.{1}.dat ./{0}.iostat.dat > /dev/null 2>&1'.format(server['hostname'], uid, options.timeout), shell=True)
+        call('scp -o "StrictHostKeyChecking no" -o ConnectTimeout={2} {3}@{0}:./iostat.{1}.dat ./{0}.iostat.dat > /dev/null 2>&1'.format(server['hostname'], uid, options.timeout, options.user), shell=True)
         call('paste -d "," ./{0}.dstat.dat ./{0}.iostat.dat > ./{0}.dat; rm -f ./{0}.dstat.dat ./{0}.iostat.dat'.format(server['hostname']), shell=True)
         COMMAND=("rm -f dstat.{0}.dat iostat.{0}.dat").format(uid)
-        subprocess_cmd("root", server['hostname'], COMMAND, options.timeout)
+        subprocess_cmd(options.user, server['hostname'], COMMAND, options.timeout)
 
     call(['rm', '-f', 'umon.gnu'])
     # Create GNU Plot file
@@ -116,13 +118,13 @@ def main():
      'set style line 5 lt 1 lc rgb "#D0D000" lw 2 pt 13 ps 1\n'
      'set style line 6 lt 1 lc rgb "#00D0D0" lw 2 pt 12 ps 1\n'
      'set style line 7 lt 1 lc rgb "#B200B2" lw 2 pt 5 ps 1\n'
-     'set multiplot layout {2},6 rowsfirst\n').format(WIDTH, HEIGHT, len(conf['servers']))
+     'set multiplot layout {2},6 rowsfirst title "\\n\\nhttps://github.com/nmotte/umon\\n\\n" font ",60"\n').format(WIDTH, HEIGHT, len(conf['servers']))
     
     
     for server in conf['servers']:
         GNU_FILE+=(
             # Network
-            'set label 1 "Network {0}" at graph 0.2,1.1 font ",8"\n'
+            'set title "Network {0}" font ",40"\n'
             'set format y "%.0s%cB"\n'
             'plot '
         ).format(server['hostname'])
@@ -137,7 +139,7 @@ def main():
         GNU_FILE+=','.join(interfaces)+'\n'
 
         GNU_FILE+=(# IO
-            'set label 1 "IO {0}" at graph 0.2,1.1 font ",8"\n'
+            'set title "IO {0}" font ",40"\n'
             'set format y "%.0s%cB"\n'
             'plot '
         ).format(server['hostname'])
@@ -155,25 +157,25 @@ def main():
 
         # CPU
         GNU_FILE+=(
-            'set label 1 "CPU {0}" at graph 0.2,1.1 font ",8"\n'
+            'set title "CPU {0}" font ",40"\n'
             'unset format\n'
             'plot "{0}.dat" u (${1}+${2}+${3}+${4}) w filledcurves x1 t "usr", \\\n'
                  '"{0}.dat" u (${2}+${3}+${4}) w filledcurves x1 t "idl", \\\n'
                  '"{0}.dat" u (${2}+${4}) w filledcurves x1 t "sys", \\\n'
                  '"{0}.dat" u (${4}) w filledcurves x1 t "wait"\n'
             # Memory
-            'set label 1 "Memory {0}" at graph 0.2,1.1 font ",8"\n'
+            'set title "Memory {0}" font ",40"\n'
             'set format y "%.0s%cB"\n'
             'plot "{0}.dat" u (${5}+${6}+${7}+${8}) w filledcurves x1 t "used", \\\n'
                  '"{0}.dat" u (${6}+${7}+${8}) w filledcurves x1 t "buf", \\\n'
                  '"{0}.dat" u (${7}+${8}) w filledcurves x1 t "cache", \\\n'
                  '"{0}.dat" u (${8}) w filledcurves x1 t "free"\n'
             # System stats
-            'set label 1 "System stats {0}" at graph 0.2,1.1 font ",8"\n'
+            'set title "System stats {0}" font ",40"\n'
             'set format y "%.0s%c"\n'
             'plot "{0}.dat" u {9} w lp ls 1 t "Csw"\n'
             # w_await
-            'set label 1 "w await {0}" at graph 0.2,1.1 font ",8"\n'
+            'set title "w await {0}" font ",40"\n'
             'unset format\n'
             'plot '
         ).format(server['hostname'], field, field+1, field+2, field+3, field+6, field+7, field+8, field+9, field+11)
