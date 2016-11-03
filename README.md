@@ -6,7 +6,7 @@ It provides a lightweight way to monitor system metrics and display them in one 
 It is meant for proofs of concept and troubleshooting.
 
 ## Output
-![alt text](https://github.com/nmotte/umon/blob/master/screenshot/output.png)
+![alt text](https://github.com/nmotte/umon/blob/master/screenshot/example.png)
 
 ## Pre-requisites
 * Install gnuplot on the server running umon
