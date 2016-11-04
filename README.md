@@ -73,7 +73,7 @@ Usage: umon.py [options] arg
 
 Options:
   -h, --help            show this help message and exit
-  -u USER, --user=USER  User used for SSH and scp, default=root
+  -u USER, --user=USER  User used for SSH and scp
   -r TIME, --runtime=TIME
                         Monitoring time (in seconds), default=-1 (stops on
                         user input)
@@ -85,7 +85,7 @@ Options:
                         SSH connection timeout (in seconds), default=60
   -d, --debug           Enable debug logs
 
-> python umon.py -r 5 -s 1 -t 10 -c umon.json
+> python umon.py -r 5 -s 1 -t 10 -c umon.json -u root
 INFO    # Umon UID: 3637a7b6-2cb0-4762-a099-07d2535d8ad3
 INFO    # Starting dstat and iostat on ns6737901.ip-164-132-166.eu
 INFO    # Umon started at 13:08:38 GMT, it will stop in 5 seconds...
@@ -94,7 +94,7 @@ INFO    # Retrieving and merging stats from ns6737901.ip-164-132-166.eu
 INFO    # Generating gnuplot configuration file
 INFO    # Dumping graphs in output.png
 
-> python umon.py -s 1 -t 10 -c umon.json
+> python umon.py -s 1 -t 10 -c umon.json -u root
 INFO    # Umon UID: 4ab75362-8594-41dc-b78b-5081968b3e4a
 INFO    # Starting dstat and iostat on ns6737901.ip-164-132-166.eu
 INFO    # Umon started at 13:08:38 GMT... Enter 'stop' to stop:

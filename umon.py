@@ -26,7 +26,7 @@ def main():
 
     usage = "usage: %prog [options] arg"
     parser = OptionParser(usage)
-    parser.add_option("-u", "--user",  help="User used for SSH and scp, default=root", dest="user", default="root")
+    parser.add_option("-u", "--user",     help="User used for SSH and scp", dest="user")
     parser.add_option("-r", "--runtime",  help="Monitoring time (in seconds), default=-1 (stops on user input)", dest="time", type="int", default=-1)
     parser.add_option("-c", "--conf",     help="Path to a configuration file", dest="conf")
     parser.add_option("-s", "--sampling", help="Sampling time (time between two dots, in seconds), default=5", dest="sampling", type="int", default=5)
@@ -46,6 +46,10 @@ def main():
         return
     if not options.conf:
         logging.info('Conf file is missing')
+        parser.print_help()
+        return
+    if not options.user:
+        logging.info('User is missing')
         parser.print_help()
         return
 
