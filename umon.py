@@ -4,10 +4,10 @@ import json, uuid, os, logging
 import subprocess, sys, time
 from subprocess import call
 
-def subprocess_cmd(user, host, command, timeout):
+def subprocess_cmd(user, host, command, timeout, identity):
     flag=True
     while (flag):
-        ssh = subprocess.Popen('ssh -o "StrictHostKeyChecking no" -o ConnectTimeout={2} {0}@{1} '.format(user, host, timeout) + command, shell=True, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
+        ssh = subprocess.Popen('ssh -o "StrictHostKeyChecking no" -o ConnectTimeout={2} -i {3} {0}@{1} '.format(user, host, timeout, identity) + command, shell=True, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
         error = ssh.stderr.readlines()
         logging.debug(error)
         if (len(error) > 0):
@@ -27,6 +27,7 @@ def main():
     usage = "usage: %prog [options] arg"
     parser = OptionParser(usage)
     parser.add_option("-u", "--user",     help="User used for SSH and scp", dest="user")
+    parser.add_option("-i", "--identity-file",     help="Identity-file used for SSH and scp", dest="identity")
     parser.add_option("-r", "--runtime",  help="Monitoring time (in seconds), default=-1 (stops on user input)", dest="time", type="int", default=-1)
     parser.add_option("-c", "--conf",     help="Path to a configuration file", dest="conf")
     parser.add_option("-s", "--sampling", help="Sampling time (time between two dots, in seconds), default=5", dest="sampling", type="int", default=5)
@@ -52,6 +53,10 @@ def main():
         logging.info('User is missing')
         parser.print_help()
         return
+    if not options.identity:
+        logging.info('Identity file is missing')
+        parser.print_help()
+        return
 
     uid = str(uuid.uuid4())
 
@@ -70,7 +75,7 @@ def main():
         'echo $! > dstat.{0}.pid;'
         'nohup iostat -d -x -m -p {1} {4} | awk "/{2}\ / {{printf \\"%s,%s\\n\\",\$11,\$12; fflush(stdout)}}" | awk "NR%{5}!=0 {{printf \$0;printf \\",\\";fflush(stdout)}} NR%{5}==0 {{printf \$0;print \\"\\";fflush(stdout)}}" > iostat.{0}.dat&'
         'echo $! > iostat.{0}.pid;\'').format(uid, ','.join(server['devices']), '\ |'.join(server['devices']), ','.join(server['interfaces']), options.sampling, len(server['devices']))
-        subprocess_cmd(options.user, server['hostname'], COMMAND, options.timeout)
+        subprocess_cmd(options.user, server['hostname'], COMMAND, options.timeout, options.identity)
             
     
     # Wait for test
@@ -87,19 +92,19 @@ def main():
     for server in conf['servers']:
         logging.info(("Stopping dstat and iostat on {0}").format(server['hostname']))
         COMMAND=('\'kill `cat dstat.{0}.pid`;kill `cat iostat.{0}.pid`;rm -f iostat.{0}.pid dstat.{0}.pid;\'').format(uid)
-        subprocess_cmd(options.user, server['hostname'], COMMAND, options.timeout)
+        subprocess_cmd(options.user, server['hostname'], COMMAND, options.timeout, options.identity)
 
     # Gather stats
     for server in conf['servers']:
         logging.info("Retrieving and merging stats from {0}".format(server['hostname']))
-        call('scp -o "StrictHostKeyChecking no" -o ConnectTimeout={2} {3}@{0}:./dstat.{1}.dat ./{0}.dstat.dat > /dev/null 2>&1'.format(server['hostname'], uid, options.timeout, options.user), shell=True)
+        call('scp -o "StrictHostKeyChecking no" -o ConnectTimeout={2} -i {4} {3}@{0}:./dstat.{1}.dat ./{0}.dstat.dat > /dev/null 2>&1'.format(server['hostname'], uid, options.timeout, options.user, options.identity), shell=True)
         with open("tmpfile", "w") as tmp:
             call(['sed', '1,7d', '{0}.dstat.dat'.format(server['hostname'])], stdout=tmp)
         call(['mv', 'tmpfile', '{0}.dstat.dat'.format(server['hostname'])])
-        call('scp -o "StrictHostKeyChecking no" -o ConnectTimeout={2} {3}@{0}:./iostat.{1}.dat ./{0}.iostat.dat > /dev/null 2>&1'.format(server['hostname'], uid, options.timeout, options.user), shell=True)
+        call('scp -o "StrictHostKeyChecking no" -o ConnectTimeout={2} -i {4} {3}@{0}:./iostat.{1}.dat ./{0}.iostat.dat > /dev/null 2>&1'.format(server['hostname'], uid, options.timeout, options.user, options.identity), shell=True)
         call('paste -d "," ./{0}.dstat.dat ./{0}.iostat.dat > ./{0}.dat; rm -f ./{0}.dstat.dat ./{0}.iostat.dat'.format(server['hostname']), shell=True)
         COMMAND=("rm -f dstat.{0}.dat iostat.{0}.dat").format(uid)
-        subprocess_cmd(options.user, server['hostname'], COMMAND, options.timeout)
+        subprocess_cmd(options.user, server['hostname'], COMMAND, options.timeout, options.identity)
 
     call(['rm', '-f', 'umon.gnu'])
     # Create GNU Plot file
@@ -179,7 +184,7 @@ def main():
             'set format y "%.0s%c"\n'
             'plot "{0}.dat" u {9} w lp ls 1 t "Csw"\n'
             # w_await
-            'set title "w await {0}" font ",40"\n'
+            'set title "await {0}" font ",40"\n'
             'unset format\n'
             'plot '
         ).format(server['hostname'], field, field+1, field+2, field+3, field+6, field+7, field+8, field+9, field+11)
