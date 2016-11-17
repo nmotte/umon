@@ -164,30 +164,32 @@ def main():
             field+=1
         GNU_FILE+=','.join(devices)+'\n'
 
-        # CPU
         GNU_FILE+=(
+            # CPU
             'set title "CPU {0}" font ",40"\n'
             'unset format\n'
-            'plot "{0}.dat" u (${1}+${2}+${3}+${4}) w filledcurves x1 t "usr", \\\n'
-                 '"{0}.dat" u (${2}+${3}+${4}) w filledcurves x1 t "idl", \\\n'
-                 '"{0}.dat" u (${2}+${4}) w filledcurves x1 t "sys", \\\n'
-                 '"{0}.dat" u (${4}) w filledcurves x1 t "wait"\n'
+            'plot "{0}.dat" u (${1}+${2}+${3}+${4}+${5}+${6}) w filledcurves x1 ls 1 t "usr", \\\n'
+                 '"{0}.dat" u (${2}+${3}+${4}+${5}+${6}) w filledcurves x1 ls 2 t "idl", \\\n'
+                 '"{0}.dat" u (${2}+${4}+${5}+${6}) w filledcurves x1 ls 3 t "sys", \\\n'
+                 '"{0}.dat" u (${4}+${5}+${6}) w filledcurves x1 ls 4 t "wait", \\\n'
+                 '"{0}.dat" u (${5}+${6}) w filledcurves x1 ls 5 t "hiq", \\\n'
+                 '"{0}.dat" u (${6}) w filledcurves x1 ls 6 t "siq"\n'
             # Memory
             'set title "Memory {0}" font ",40"\n'
             'set format y "%.0s%cB"\n'
-            'plot "{0}.dat" u (${5}+${6}+${7}+${8}) w filledcurves x1 t "used", \\\n'
-                 '"{0}.dat" u (${6}+${7}+${8}) w filledcurves x1 t "buf", \\\n'
-                 '"{0}.dat" u (${7}+${8}) w filledcurves x1 t "cache", \\\n'
-                 '"{0}.dat" u (${8}) w filledcurves x1 t "free"\n'
+            'plot "{0}.dat" u (${7}+${8}+${9}+${10}) w filledcurves x1 ls 1 t "used", \\\n'
+                 '"{0}.dat" u (${8}+${9}+${10}) w filledcurves x1 ls 4 t "buf", \\\n'
+                 '"{0}.dat" u (${9}+${10}) w filledcurves x1 ls 3 t "cache", \\\n'
+                 '"{0}.dat" u (${10}) w filledcurves x1 ls 2 t "free"\n'
             # System stats
             'set title "System stats {0}" font ",40"\n'
             'set format y "%.0s%c"\n'
-            'plot "{0}.dat" u {9} w lp ls 1 t "Csw"\n'
+            'plot "{0}.dat" u {11} w lp ls 1 t "Csw"\n'
             # w_await
             'set title "await {0}" font ",40"\n'
             'unset format\n'
             'plot '
-        ).format(server['hostname'], field, field+1, field+2, field+3, field+6, field+7, field+8, field+9, field+11)
+        ).format(server['hostname'], field, field+1, field+2, field+3, field+4, field+5, field+6, field+7, field+8, field+9, field+11)
         field += 12
 
         line_style = 1
