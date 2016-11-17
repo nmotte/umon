@@ -79,12 +79,15 @@ Options:
   -r TIME, --runtime=TIME
                         Monitoring time (in seconds), default=-1 (stops on
                         user input)
-  -c CONF, --conf=CONF  Path to a configuration file
+  -j CONF, --json-conf=CONF
+                        Path to a configuration file
   -s SAMPLING, --sampling=SAMPLING
                         Sampling time (time between two dots, in seconds),
                         default=5
   -t TIMEOUT, --timeout=TIMEOUT
                         SSH connection timeout (in seconds), default=60
+  -c, --clean-up        Clean up all running processes and files on all
+                        servers.
   -d, --debug           Enable debug logs
 
 > python umon.py -r 5 -s 1 -t 10 -c umon.json -u root -i ~/.ssh/cloud.key
@@ -105,4 +108,9 @@ INFO    # Stopping dstat and iostat on ns6737901.ip-164-132-166.eu
 INFO    # Retrieving and merging stats from ns6737901.ip-164-132-166.eu
 INFO    # Generating gnuplot configuration file
 INFO    # Dumping graphs in output.png
+
+> python umon.py -j umon.json -u cloud-user -i ~/.ssh/cloud.key --clean-up
+INFO    # Cleaning up ose3-node-0
+INFO    # Cleaning up ose3-master-0
+INFO    # Clean up done, exiting now
 ```

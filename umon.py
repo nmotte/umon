@@ -29,9 +29,10 @@ def main():
     parser.add_option("-u", "--user",     help="User used for SSH and scp", dest="user")
     parser.add_option("-i", "--identity-file",     help="Identity-file used for SSH and scp", dest="identity")
     parser.add_option("-r", "--runtime",  help="Monitoring time (in seconds), default=-1 (stops on user input)", dest="time", type="int", default=-1)
-    parser.add_option("-c", "--conf",     help="Path to a configuration file", dest="conf")
+    parser.add_option("-j", "--json-conf",     help="Path to a configuration file", dest="conf")
     parser.add_option("-s", "--sampling", help="Sampling time (time between two dots, in seconds), default=5", dest="sampling", type="int", default=5)
     parser.add_option("-t", "--timeout",  help="SSH connection timeout (in seconds), default=60", dest="timeout", type="int", default=60)
+    parser.add_option("-c", "--clean-up", action="store_true", dest="clean", default=False, help="Clean up all running processes and files on all servers")
     parser.add_option("-d", "--debug", action="store_true", dest="debug", default=False, help="Enable debug logs")
     (options, args) = parser.parse_args()
 
@@ -41,10 +42,6 @@ def main():
         level = logging.DEBUG
     logging.basicConfig(stream=sys.stdout, level=level, format='%(levelname)s\t# %(message)s')
 
-    if not options.time:
-        logging.info('Monitoring time is missing')
-        parser.print_help()
-        return
     if not options.conf:
         logging.info('Conf file is missing')
         parser.print_help()
@@ -55,6 +52,26 @@ def main():
         return
     if not options.identity:
         logging.info('Identity file is missing')
+        parser.print_help()
+        return
+
+    if (options.clean):
+
+        with open(options.conf) as conf_file:
+            conf = json.load(conf_file)
+
+        for server in conf['servers']:
+            logging.info(("Cleaning up {0}").format(server['hostname']))
+            COMMAND=('\'cat *.pid | xargs --no-run-if-empty kill;'
+            'rm -f *.pid;'
+            'rm -f *.dat;\'')
+            subprocess_cmd(options.user, server['hostname'], COMMAND, options.timeout, options.identity)
+
+        logging.info('Clean up done, exiting now')
+        sys.exit(0)
+
+    if not options.time:
+        logging.info('Monitoring time is missing')
         parser.print_help()
         return
 
